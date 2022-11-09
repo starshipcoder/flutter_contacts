@@ -611,7 +611,6 @@ class FlutterContacts {
             return groups.values.map { it.toMap() }
         }
 
-
         fun insertGroup(resolver: ContentResolver, groupMap: Map<String, Any>): Map<String, Any> {
             val ops = mutableListOf<ContentProviderOperation>()
 
@@ -825,11 +824,13 @@ class FlutterContacts {
             val projection = listOf(
                 Groups._ID,
                 Groups.TITLE,
+                Groups.ACCOUNT_NAME,
+                Groups.ACCOUNT_TYPE,
             )
             val cursor = resolver.query(
                 Groups.CONTENT_URI,
                 projection.toTypedArray(),
-                "${Groups.ACCOUNT_NAME} = $name AND ${Groups.ACCOUNT_TYPE} = $type",
+                "${Groups.ACCOUNT_NAME}='$name' AND ${Groups.ACCOUNT_TYPE}='$type'",
                 /*selectionArgs=*/null,
                 /*sortOrder=*/null
             )
