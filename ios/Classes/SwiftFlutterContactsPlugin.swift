@@ -372,22 +372,7 @@ public enum FlutterContacts {
     }
 
     private static func fetchGroupForAccount(_ store: CNContactStore, _ accountId: String) -> [CNGroup] {
-        let containerPredicate =  CNContainer.predicateForContainers(withIdentifiers: [accountId])
-
-        var cnContainers: [CNContainer] = []
-        do {
-            cnContainers = try store.containers(matching: containerPredicate)
-        } catch {
-            print("Error fetching containers")
-        }
-        
-        if (cnContainers.count == 0) {
-            return []
-        }
-        
-        var container = cnContainers.first!
-        
-        let groupPredicate = CNGroup.predicateForGroupsInContainer(withIdentifier: container.identifier)
+        let groupPredicate = CNGroup.predicateForGroupsInContainer(withIdentifier: accountId)
 
         var cnGroups: [CNGroup] = []
         do {
@@ -395,7 +380,7 @@ public enum FlutterContacts {
         } catch {
             print("Error fetching groups")
         }
-        
+
         return cnGroups
     }
 

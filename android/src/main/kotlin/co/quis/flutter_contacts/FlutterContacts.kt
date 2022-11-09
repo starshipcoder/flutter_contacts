@@ -606,6 +606,12 @@ class FlutterContacts {
             return groups.values.map { it.toMap() }
         }
 
+        fun getGroupsForAccount(resolver: ContentResolver, accountId: String): List<Map<String, Any>> {
+            val groups = fetchGroupsForAccount(resolver, accountId)
+            return groups.values.map { it.toMap() }
+        }
+
+
         fun insertGroup(resolver: ContentResolver, groupMap: Map<String, Any>): Map<String, Any> {
             val ops = mutableListOf<ContentProviderOperation>()
 
@@ -758,6 +764,33 @@ class FlutterContacts {
                 Groups.CONTENT_URI,
                 projection.toTypedArray(),
                 /*selection=*/null,
+                /*selectionArgs=*/null,
+                /*sortOrder=*/null
+            )
+            if (cursor == null) {
+                return mapOf()
+            }
+            var groups = mutableMapOf<String, PGroup>()
+            while (cursor.moveToNext()) {
+                val groupId = cursor.getString(cursor.getColumnIndex(Groups._ID)) ?: ""
+                val groupName = cursor.getString(cursor.getColumnIndex(Groups.TITLE)) ?: ""
+                groups[groupId] = PGroup(id = groupId, name = groupName)
+            }
+            return groups
+        }
+
+        fun fetchGroupsForAccount(resolver: ContentResolver, accountId: String): Map<String, PGroup> {
+            val split = accountId.split("|")
+            val name = split[0]
+            val type = split[1]
+            val projection = listOf(
+                Groups._ID,
+                Groups.TITLE,
+            )
+            val cursor = resolver.query(
+                Groups.CONTENT_URI,
+                projection.toTypedArray(),
+                "${Groups.ACCOUNT_NAME} = $name AND ${Groups.ACCOUNT_TYPE} = $type",
                 /*selectionArgs=*/null,
                 /*sortOrder=*/null
             )
