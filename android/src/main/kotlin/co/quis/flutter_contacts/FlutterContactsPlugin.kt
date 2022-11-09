@@ -245,6 +245,13 @@ class FlutterContactsPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Str
                         FlutterContacts.getGroups(resolver!!)
                     coroutineScope.launch(Dispatchers.Main) { result.success(groups) }
                 }
+            "getGroupsForAccount" -> GlobalScope.launch(Dispatchers.IO) {
+                val args = call.arguments as List<Any>
+                val accountId = args[0] as String
+                val groups: List<Map<String, Any?>> =
+                    FlutterContacts.getGroupsForAccount(resolver!!, accountId)
+                GlobalScope.launch(Dispatchers.Main) { result.success(groups) }
+            }
             // Insert a new group and returns it.
             "insertGroup" ->
                 coroutineScope.launch(Dispatchers.IO) {
