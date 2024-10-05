@@ -855,8 +855,8 @@ class FlutterContacts {
             val cursor = resolver.query(
                 Groups.CONTENT_URI,
                 projection.toTypedArray(),
-                "${Groups.ACCOUNT_NAME} = $name AND ${Groups.ACCOUNT_TYPE} = $type",
-                /*selectionArgs=*/null,
+                "${Groups.ACCOUNT_NAME} = ? AND ${Groups.ACCOUNT_TYPE} = ?",
+                arrayOf(name, type),
                 /*sortOrder=*/null
             )
             if (cursor == null) {
