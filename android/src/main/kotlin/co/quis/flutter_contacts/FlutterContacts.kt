@@ -86,6 +86,7 @@ class FlutterContacts {
             withPhoto: Boolean,
             withGroups: Boolean,
             withAccounts: Boolean,
+            onlyWithAddress: Boolean,
             returnUnifiedContacts: Boolean,
             includeNonVisible: Boolean,
             idIsRawContactId: Boolean = false
@@ -178,6 +179,11 @@ class FlutterContacts {
                 // See: https://stackoverflow.com/questions/28665587/what-does-contactscontract-contacts-in-visible-group-mean-in-android
                 selectionClauses.add("${Data.IN_VISIBLE_GROUP} = 1")
             }
+
+//            if (onlyWithAddress) {
+//                selectionClauses.add("${Data.MIMETYPE} = '${ContactsContract.CommonDataKinds.StructuredPostal.CONTENT_ITEM_TYPE}'")
+//            }
+
             var selectionArgs = arrayOf<String>()
 
             if (id != null) {
@@ -189,6 +195,8 @@ class FlutterContacts {
                 selectionArgs = arrayOf(id)
             }
             val selection: String? = if (selectionClauses.isEmpty()) null else selectionClauses.joinToString(separator = " AND ")
+
+
 
             // NOTE: The projection filters columns, and the selection filters rows. We
             // could filter rows to those with requested MIME types, but it introduces a
@@ -431,6 +439,10 @@ class FlutterContacts {
 
             cursor.close()
 
+            if (onlyWithAddress) {
+                contacts = contacts.filter { it.addresses.isNotEmpty() }.toMutableList()
+            }
+
             return contacts.map { it.toMap() }
         }
 
@@ -500,6 +512,7 @@ class FlutterContacts {
                 /*withPhoto=*/true,
                 /*withGroups=*/false, // slower, usually not needed
                 /*withAccounts=*/true,
+                /*onlyWithAddress*/false,
                 /*returnUnifiedContacts=*/true,
                 /*includeNonVisible=*/true,
                 /*idIsRawContactId=*/true
@@ -602,6 +615,7 @@ class FlutterContacts {
                 /*withPhoto=*/true,
                 /*withGroups=*/false, // slower, usually not needed
                 /*withAccounts=*/true,
+                /*onlyWithAddress*/false,
                 /*returnUnifiedContacts=*/true,
                 /*includeNonVisible=*/true,
                 /*idIsRawContactId=*/true

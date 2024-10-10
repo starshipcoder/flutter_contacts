@@ -12,6 +12,7 @@ public enum FlutterContacts {
         withProperties: Bool,
         withThumbnail: Bool,
         withPhoto: Bool,
+        onlyWithAddress: Bool,
         returnUnifiedContacts: Bool,
         includeNotesOnIos13AndAbove: Bool,
         externalIntent: Bool = false
@@ -65,17 +66,31 @@ public enum FlutterContacts {
             // Request for a specific contact.
             request.predicate = CNContact.predicateForContacts(withIdentifiers: [id!])
         }
-        do {
-            try store.enumerateContacts(
-                with: request, usingBlock: { (contact, _) -> Void in
-                    contacts.append(contact)
+//        do {
+//            try store.enumerateContacts(
+//                with: request, usingBlock: { (contact, _) -> Void in
+//                    contacts.append(contact)
+//                }
+//            )
+//        } catch {
+//            print("Unexpected error: \(error)")
+//            return []
+//        }
+         do {
+                try store.enumerateContacts(with: request) { (contact, _) -> Void in
+                    // Si le paramètre `onlyWithAddress` est activé, on ne garde que les contacts ayant une adresse
+                    if onlyWithAddress {
+                        if !contact.postalAddresses.isEmpty {
+                            contacts.append(contact) // Ajouter uniquement les contacts avec une adresse postale
+                        }
+                    } else {
+                        contacts.append(contact) // Ajouter tous les contacts
+                    }
                 }
-            )
-        } catch {
-            print("Unexpected error: \(error)")
-            return []
-        }
-
+            } catch {
+                print("Unexpected error: \(error)")
+                return []
+            }
         return contacts
     }
 
@@ -86,6 +101,7 @@ public enum FlutterContacts {
         withPhoto: Bool,
         withGroups: Bool,
         withAccounts: Bool,
+        onlyWithAddress: Bool,
         returnUnifiedContacts: Bool,
         includeNotesOnIos13AndAbove: Bool
     ) -> [[String: Any?]] {
@@ -96,6 +112,7 @@ public enum FlutterContacts {
             withProperties: withProperties,
             withThumbnail: withThumbnail,
             withPhoto: withPhoto,
+            onlyWithAddress: onlyWithAddress,
             returnUnifiedContacts: returnUnifiedContacts,
             includeNotesOnIos13AndAbove: includeNotesOnIos13AndAbove
         )
@@ -495,9 +512,10 @@ public class SwiftFlutterContactsPlugin: NSObject, FlutterPlugin, FlutterStreamH
                 let withPhoto = args[3] as! Bool
                 let withGroups = args[4] as! Bool
                 let withAccounts = args[5] as! Bool
-                let returnUnifiedContacts = args[6] as! Bool
-                // args[7] = includeNonVisibleOnAndroid
-                let includeNotesOnIos13AndAbove = args[8] as! Bool
+                let onlyWithAddress = args[6] as! Bool
+                let returnUnifiedContacts = args[7] as! Bool
+                // args[8] = includeNonVisibleOnAndroid
+                let includeNotesOnIos13AndAbove = args[9] as! Bool
                 let contacts = FlutterContacts.select(
                     id: id,
                     withProperties: withProperties,
@@ -505,6 +523,7 @@ public class SwiftFlutterContactsPlugin: NSObject, FlutterPlugin, FlutterStreamH
                     withPhoto: withPhoto,
                     withGroups: withGroups,
                     withAccounts: withAccounts,
+                    onlyWithAddress: onlyWithAddress,
                     returnUnifiedContacts: returnUnifiedContacts,
                     includeNotesOnIos13AndAbove: includeNotesOnIos13AndAbove
                 )
@@ -637,6 +656,7 @@ public class SwiftFlutterContactsPlugin: NSObject, FlutterPlugin, FlutterStreamH
                     withProperties: true,
                     withThumbnail: true,
                     withPhoto: true,
+                    onlyWithAddress: false,
                     returnUnifiedContacts: true,
                     includeNotesOnIos13AndAbove: false,
                     externalIntent: true

@@ -24,6 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import android.util.Log
 
 class FlutterContactsPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHandler, ActivityAware, ActivityResultListener, RequestPermissionsResultListener {
     companion object {
@@ -182,9 +183,11 @@ class FlutterContactsPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Str
                     val withPhoto = args[3] as Boolean
                     val withGroups = args[4] as Boolean
                     val withAccounts = args[5] as Boolean
-                    val returnUnifiedContacts = args[6] as Boolean
-                    val includeNonVisible = args[7] as Boolean
+                    val onlyWithAddress = args[6] as Boolean
+                    val returnUnifiedContacts = args[7] as Boolean
+                    val includeNonVisible = args[8] as Boolean
                     // args[8] = includeNotesOnIos13AndAbove
+                    Log.d("TAG", "select: $id, $withProperties, $withThumbnail, $withPhoto, $withGroups, $withAccounts, $onlyWithAddress, $returnUnifiedContacts, $includeNonVisible")
                     val contacts: List<Map<String, Any?>> =
                         FlutterContacts.select(
                             resolver!!,
@@ -196,6 +199,7 @@ class FlutterContactsPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Str
                             withPhoto,
                             withGroups,
                             withAccounts,
+                            onlyWithAddress,
                             returnUnifiedContacts,
                             includeNonVisible
                         )

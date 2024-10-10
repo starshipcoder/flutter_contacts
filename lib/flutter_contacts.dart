@@ -73,6 +73,7 @@ class FlutterContacts {
     bool withGroups = false,
     bool withAccounts = false,
     bool sorted = true,
+    bool onlyWithAddress = false,
     bool deduplicateProperties = true,
   }) async =>
       _select(
@@ -82,6 +83,7 @@ class FlutterContacts {
         withGroups: withGroups,
         withAccounts: withAccounts,
         sorted: sorted,
+        onlyWithAddress: onlyWithAddress,
         deduplicateProperties: deduplicateProperties,
       );
 
@@ -323,6 +325,7 @@ class FlutterContacts {
     bool withPhoto = false,
     bool withGroups = false,
     bool withAccounts = false,
+    bool onlyWithAddress = false,
     bool sorted = true,
     bool deduplicateProperties = true,
   }) async {
@@ -335,6 +338,7 @@ class FlutterContacts {
       withPhoto,
       withGroups,
       withAccounts,
+      onlyWithAddress,
       config.returnUnifiedContacts,
       config.includeNonVisibleOnAndroid,
       config.includeNotesOnIos13AndAbove,
