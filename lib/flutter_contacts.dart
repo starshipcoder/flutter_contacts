@@ -7,6 +7,8 @@ import 'package:flutter_contacts/contact.dart';
 import 'package:flutter_contacts/diacritics.dart';
 import 'package:flutter_contacts/properties/group.dart';
 
+import 'account_info.dart';
+
 export 'contact.dart';
 export 'properties/account.dart';
 export 'properties/address.dart';
@@ -75,6 +77,7 @@ class FlutterContacts {
     bool sorted = true,
     bool onlyWithAddress = false,
     bool deduplicateProperties = true,
+    List<String> excludedAccountIds = const [],
   }) async =>
       _select(
         withProperties: withProperties,
@@ -85,6 +88,7 @@ class FlutterContacts {
         sorted: sorted,
         onlyWithAddress: onlyWithAddress,
         deduplicateProperties: deduplicateProperties,
+        excludedAccountIds: excludedAccountIds,
       );
 
   /// Fetches one contact.
@@ -230,6 +234,15 @@ class FlutterContacts {
     return groups;
   }
 
+  static Future<List<AccountInfo>> getAccountInfos(bool unifiedContacts) async {
+    List untypedInfos = await _channel.invokeMethod('getAccountInfos', unifiedContacts);
+    // ignore: omit_local_variable_types
+    List<AccountInfo> infos = untypedInfos
+        .map((x) => AccountInfo.fromJson(Map<String, dynamic>.from(x)))
+        .toList();
+    return infos;
+  }
+
   /// Inserts a new group (or label on Android).
   static Future<Group> insertGroup(Group group) async {
     return Group.fromJson(Map<String, dynamic>.from(
@@ -328,6 +341,7 @@ class FlutterContacts {
     bool onlyWithAddress = false,
     bool sorted = true,
     bool deduplicateProperties = true,
+    List<String> excludedAccountIds = const [],
   }) async {
     // removing the types makes it crash at runtime
     // ignore: omit_local_variable_types
@@ -339,6 +353,7 @@ class FlutterContacts {
       withGroups,
       withAccounts,
       onlyWithAddress,
+      excludedAccountIds,
       config.returnUnifiedContacts,
       config.includeNonVisibleOnAndroid,
       config.includeNotesOnIos13AndAbove,

@@ -7,6 +7,8 @@ data class Account(
     var mimetypes: List<String> = listOf<String>()
 ) {
 
+    val accountId: String get() = "$name|$type"
+
     companion object {
         fun fromMap(m: Map<String, Any>): Account = Account(
             m["rawId"] as String,

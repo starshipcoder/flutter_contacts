@@ -87,6 +87,7 @@ class FlutterContacts {
             withGroups: Boolean,
             withAccounts: Boolean,
             onlyWithAddress: Boolean,
+            excludedAccountIds: List<String>,
             returnUnifiedContacts: Boolean,
             includeNonVisible: Boolean,
             idIsRawContactId: Boolean = false
@@ -184,7 +185,44 @@ class FlutterContacts {
 //                selectionClauses.add("${Data.MIMETYPE} = '${ContactsContract.CommonDataKinds.StructuredPostal.CONTENT_ITEM_TYPE}'")
 //            }
 
-            var selectionArgs = arrayOf<String>()
+
+            var selectionArgs = mutableListOf<String>()
+
+//            if (excludedAccountIds.isNotEmpty()) {
+//                val selectionClause = StringBuilder()
+//
+//                // Clause pour ACCOUNT_NAME
+//                selectionClause.append("((").append(RawContacts.ACCOUNT_NAME).append(" NOT IN (")
+//                for (i in 0 until excludedAccountIds.size) {
+//                    selectionClause.append("?")
+//                    if (i < excludedAccountIds.size - 1) {
+//                        selectionClause.append(", ")
+//                    }
+//                }
+//                selectionClause.append(")) AND")
+//
+//                excludedAccountIds.forEach {
+//                    val name = it.split("|")[0]
+//                    selectionArgs.add(name)
+//                }
+//
+//                // Réinitialisation du StringBuilder pour la clause ACCOUNT_TYPE
+//                selectionClause.append("(").append(RawContacts.ACCOUNT_TYPE).append(" NOT IN (")
+//                for (i in 0 until excludedAccountIds.size) {
+//                    selectionClause.append("?")
+//                    if (i < excludedAccountIds.size - 1) {
+//                        selectionClause.append(", ")
+//                    }
+//                }
+//                selectionClause.append(")))")
+//                selectionClauses.add(selectionClause.toString())
+//
+//                excludedAccountIds.forEach {
+//                    val type = it.split("|")[1]
+//                    selectionArgs.add(type)
+//                }
+//            }
+
 
             if (id != null) {
                 if (idIsRawContactId || !returnUnifiedContacts) {
@@ -192,10 +230,10 @@ class FlutterContacts {
                 } else {
                     selectionClauses.add("${Data.CONTACT_ID} = ?")
                 }
-                selectionArgs = arrayOf(id)
+                selectionArgs = mutableListOf(id)
             }
-            val selection: String? = if (selectionClauses.isEmpty()) null else selectionClauses.joinToString(separator = " AND ")
-
+            val selection: String? =
+                if (selectionClauses.isEmpty()) null else selectionClauses.joinToString(separator = " AND ")
 
 
             // NOTE: The projection filters columns, and the selection filters rows. We
@@ -208,7 +246,7 @@ class FlutterContacts {
                 Data.CONTENT_URI,
                 projection.toTypedArray(),
                 selection,
-                selectionArgs,
+                selectionArgs.toTypedArray(),
                 /*sortOrder=*/null
             )
 
@@ -224,6 +262,9 @@ class FlutterContacts {
             fun getString(col: String): String = cursor.getString(cursor.getColumnIndex(col)) ?: ""
             fun getInt(col: String): Int = cursor.getInt(cursor.getColumnIndex(col)) ?: 0
             fun getBool(col: String): Boolean = getInt(col) == 1
+
+            val excludedAccountName = excludedAccountIds.map { it.split("|")[0] }
+            val excludedAccountType = excludedAccountIds.map { it.split("|")[1] }
 
             while (cursor.moveToNext()) {
                 // ID and display name.
@@ -263,34 +304,44 @@ class FlutterContacts {
                     contact.thumbnail = cursor.getBlob(cursor.getColumnIndex(Photo.PHOTO))
                 }
 
-                // All properties (phones, emails, etc).
-                if (withProperties) {
-                    if (withAccounts) {
-                        // Raw IDs are IDs of the contact in different accounts (e.g. the
-                        // same contact might have Google, WhatsApp and Skype accounts, each
-                        // with its own raw ID).
-                        val rawId = getString(Data.RAW_CONTACT_ID)
-                        val accountType = getString(RawContacts.ACCOUNT_TYPE)
-                        val accountName = getString(RawContacts.ACCOUNT_NAME)
-                        var accountSeen = false
-                        for (account in contact.accounts) {
-                            if (account.rawId == rawId) {
-                                accountSeen = true
-                                account.mimetypes =
-                                    (account.mimetypes + mimetype).toSortedSet().toList()
-                            }
-                        }
-                        if (!accountSeen) {
-                            val account = PAccount(
-                                rawId,
-                                accountType,
-                                accountName,
-                                listOf(mimetype)
-                            )
-                            contact.accounts += account
+                if (withAccounts) {
+                    // Raw IDs are IDs of the contact in different accounts (e.g. the
+                    // same contact might have Google, WhatsApp and Skype accounts, each
+                    // with its own raw ID).
+                    val rawId = getString(Data.RAW_CONTACT_ID)
+                    val accountType = getString(RawContacts.ACCOUNT_TYPE)
+                    val accountName = getString(RawContacts.ACCOUNT_NAME)
+                    var exclude = false
+                    for (index in 0 until excludedAccountName.size) {
+                        if (excludedAccountType[index] == accountType && excludedAccountName[index] == accountName) {
+                            exclude = true
+                            break
                         }
                     }
 
+                    if (exclude) continue
+
+                    var accountSeen = false
+                    for (account in contact.accounts) {
+                        if (account.rawId == rawId) {
+                            accountSeen = true
+                            account.mimetypes =
+                                (account.mimetypes + mimetype).toSortedSet().toList()
+                        }
+                    }
+                    if (!accountSeen) {
+                        val account = PAccount(
+                            rawId,
+                            accountType,
+                            accountName,
+                            listOf(mimetype)
+                        )
+                        contact.accounts += account
+                    }
+                }
+
+                // All properties (phones, emails, etc).
+                if (withProperties) {
                     when (mimetype) {
                         StructuredName.CONTENT_ITEM_TYPE -> {
                             // Save nickname in case it was there already.
@@ -443,6 +494,10 @@ class FlutterContacts {
                 contacts = contacts.filter { it.addresses.isNotEmpty() }.toMutableList()
             }
 
+            if (!excludedAccountIds.isEmpty()) {
+                contacts = contacts.filter { it.accounts.isNotEmpty() }.toMutableList()
+            }
+
             return contacts.map { it.toMap() }
         }
 
@@ -513,6 +568,7 @@ class FlutterContacts {
                 /*withGroups=*/false, // slower, usually not needed
                 /*withAccounts=*/true,
                 /*onlyWithAddress*/false,
+                /*excludedAccountIds=*/listOf(),
                 /*returnUnifiedContacts=*/true,
                 /*includeNonVisible=*/true,
                 /*idIsRawContactId=*/true
@@ -616,6 +672,7 @@ class FlutterContacts {
                 /*withGroups=*/false, // slower, usually not needed
                 /*withAccounts=*/true,
                 /*onlyWithAddress*/false,
+                /*excludedAccountIds=*/listOf(),
                 /*returnUnifiedContacts=*/true,
                 /*includeNonVisible=*/true,
                 /*idIsRawContactId=*/true

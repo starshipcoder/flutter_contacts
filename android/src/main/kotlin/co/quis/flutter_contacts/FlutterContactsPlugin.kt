@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.provider.ContactsContract
+import android.src.main.kotlin.co.quis.flutter_contacts.FlutterContacts2
 import androidx.annotation.NonNull
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -184,10 +185,10 @@ class FlutterContactsPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Str
                     val withGroups = args[4] as Boolean
                     val withAccounts = args[5] as Boolean
                     val onlyWithAddress = args[6] as Boolean
-                    val returnUnifiedContacts = args[7] as Boolean
-                    val includeNonVisible = args[8] as Boolean
+                    val excludedAccountIds = args[7] as List<String>
+                    val returnUnifiedContacts = args[8] as Boolean
+                    val includeNonVisible = args[9] as Boolean
                     // args[8] = includeNotesOnIos13AndAbove
-                    Log.d("TAG", "select: $id, $withProperties, $withThumbnail, $withPhoto, $withGroups, $withAccounts, $onlyWithAddress, $returnUnifiedContacts, $includeNonVisible")
                     val contacts: List<Map<String, Any?>> =
                         FlutterContacts.select(
                             resolver!!,
@@ -200,6 +201,7 @@ class FlutterContactsPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Str
                             withGroups,
                             withAccounts,
                             onlyWithAddress,
+                            excludedAccountIds,
                             returnUnifiedContacts,
                             includeNonVisible
                         )
@@ -256,6 +258,11 @@ class FlutterContactsPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Str
                     FlutterContacts.getGroupsForAccount(resolver!!, accountId)
                 coroutineScope.launch(Dispatchers.Main) { result.success(groups) }
             }
+            "getAccountInfos" ->
+                coroutineScope.launch(Dispatchers.IO) {
+                    val infos: List<Map<String, Any?>> = FlutterContacts2.getAccountInfos(resolver!!, false)
+                    coroutineScope.launch(Dispatchers.Main) { result.success(infos) }
+                }
             // Insert a new group and returns it.
             "insertGroup" ->
                 coroutineScope.launch(Dispatchers.IO) {
@@ -364,6 +371,8 @@ class FlutterContactsPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Str
                     /*withPhoto=*/false,
                     /*withGroups=*/false,
                     /*withAccounts=*/false,
+                    /*onlyWithAddress=*/false,
+                    /*excludedAccountIds=*/listOf(),
                     /*returnUnifiedContacts=*/true,
                     /*includeNonVisible=*/true,
                     /*idIsRawContactId=*/true
