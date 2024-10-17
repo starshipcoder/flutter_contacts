@@ -433,8 +433,8 @@ public enum FlutterContacts {
                     "type": account.type,
                     "rawId": account.rawId,
                     "accountId": account.rawId,
-//                    "contactCount": contactCount,
-//                    "addressCount": addressCount
+                    "contactCount": contactCount,
+                    "addressCount": addressCount
                 ]
 
                 // Ajouter les informations à la liste
