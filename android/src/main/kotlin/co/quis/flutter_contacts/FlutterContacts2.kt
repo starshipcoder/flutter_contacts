@@ -114,8 +114,6 @@ class FlutterContacts2 {
                 for (account in contact.accounts) {
                     if (account.rawId == rawId) {
                         accountSeen = true
-                        account.mimetypes =
-                            (account.mimetypes + mimetype).toSortedSet().toList()
                     }
                 }
                 if (!accountSeen) {
@@ -123,7 +121,6 @@ class FlutterContacts2 {
                         rawId,
                         accountType,
                         accountName,
-                        listOf(mimetype)
                     )
                     contact.accounts += account
                 }
@@ -174,7 +171,6 @@ class FlutterContacts2 {
                         accountInfoMap[accountId] = AccountInfo(
                             name = account.name,
                             type = account.type,
-                            mimetypes = account.mimetypes,
                             accountId = accountId,
                             contactCount = 1, // Premier contact associé à ce compte
                             addressCount = contact.addresses.size // Nombre d'adresses pour ce contact

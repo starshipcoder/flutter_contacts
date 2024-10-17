@@ -325,16 +325,14 @@ class FlutterContacts {
                     for (account in contact.accounts) {
                         if (account.rawId == rawId) {
                             accountSeen = true
-                            account.mimetypes =
-                                (account.mimetypes + mimetype).toSortedSet().toList()
+
                         }
                     }
                     if (!accountSeen) {
                         val account = PAccount(
                             rawId,
                             accountType,
-                            accountName,
-                            listOf(mimetype)
+                            accountName
                         )
                         contact.accounts += account
                     }
