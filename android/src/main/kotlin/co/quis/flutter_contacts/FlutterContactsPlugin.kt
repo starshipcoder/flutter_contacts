@@ -260,7 +260,9 @@ class FlutterContactsPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Str
             }
             "getAccountInfos" ->
                 coroutineScope.launch(Dispatchers.IO) {
-                    val infos: List<Map<String, Any?>> = FlutterContacts2.getAccountInfos(resolver!!, false)
+                    val args = call.arguments as List<Any>
+                    val unifiedContacts = args[0] as Boolean
+                    val infos: List<Map<String, Any?>> = FlutterContacts2.getAccountInfos(resolver!!, unifiedContacts)
                     coroutineScope.launch(Dispatchers.Main) { result.success(infos) }
                 }
             // Insert a new group and returns it.

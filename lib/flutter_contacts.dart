@@ -235,7 +235,7 @@ class FlutterContacts {
   }
 
   static Future<List<AccountInfo>> getAccountInfos(bool unifiedContacts) async {
-    List untypedInfos = await _channel.invokeMethod('getAccountInfos', unifiedContacts);
+    List untypedInfos = await _channel.invokeMethod('getAccountInfos', [unifiedContacts]);
     // ignore: omit_local_variable_types
     List<AccountInfo> infos = untypedInfos
         .map((x) => AccountInfo.fromJson(Map<String, dynamic>.from(x)))
@@ -339,9 +339,9 @@ class FlutterContacts {
     bool withGroups = false,
     bool withAccounts = false,
     bool onlyWithAddress = false,
+    List<String> excludedAccountIds = const [],
     bool sorted = true,
     bool deduplicateProperties = true,
-    List<String> excludedAccountIds = const [],
   }) async {
     // removing the types makes it crash at runtime
     // ignore: omit_local_variable_types

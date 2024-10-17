@@ -13,6 +13,7 @@ public enum FlutterContacts {
         withThumbnail: Bool,
         withPhoto: Bool,
         onlyWithAddress: Bool,
+        excludedAccountIds: [String],
         returnUnifiedContacts: Bool,
         includeNotesOnIos13AndAbove: Bool,
         externalIntent: Bool = false
@@ -102,6 +103,7 @@ public enum FlutterContacts {
         withGroups: Bool,
         withAccounts: Bool,
         onlyWithAddress: Bool,
+        excludedAccountIds: [String],
         returnUnifiedContacts: Bool,
         includeNotesOnIos13AndAbove: Bool
     ) -> [[String: Any?]] {
@@ -113,6 +115,7 @@ public enum FlutterContacts {
             withThumbnail: withThumbnail,
             withPhoto: withPhoto,
             onlyWithAddress: onlyWithAddress,
+            excludedAccountIds: excludedAccountIds,
             returnUnifiedContacts: returnUnifiedContacts,
             includeNotesOnIos13AndAbove: includeNotesOnIos13AndAbove
         )
@@ -402,6 +405,47 @@ public enum FlutterContacts {
         }
     }
 
+    static func getAccountsInfos(unifiedContacts: Bool) -> [[String: Any]] {
+        let store = CNContactStore()
+        let containers = fetchContainers(store)
+        print("Number of containers: \(containers.count)")
+        var accountsInfoArray: [[String: Any]] = []
+
+        // Pour chaque container, récupérer les contacts associés
+        for container in containers {
+            print("Processing container: \(container.name)")
+            let predicate = CNContact.predicateForContactsInContainer(withIdentifier: container.identifier)
+            let keysToFetch = [CNContactPostalAddressesKey as CNKeyDescriptor, CNContactGivenNameKey as CNKeyDescriptor, CNContactFamilyNameKey as CNKeyDescriptor]
+            do {
+                let contacts = try store.unifiedContacts(matching: predicate, keysToFetch: keysToFetch)
+
+                // Compter le nombre de contacts et le nombre d'adresses
+                let contactCount = contacts.count
+                let addressCount = contacts.reduce(0) { count, contact in
+                    return count + contact.postalAddresses.count
+                }
+
+                let account = Account(fromContainer: container)
+
+                // Créer les informations du compte (container)
+                let accountInfo: [String: Any] = [
+                    "accountName": account.name,
+                    "type": account.type,
+                    "rawId": account.rawId,
+                    "accountId": account.rawId,
+//                    "contactCount": contactCount,
+//                    "addressCount": addressCount
+                ]
+
+                // Ajouter les informations à la liste
+                accountsInfoArray.append(accountInfo)
+            } catch {
+                print("Error fetching contacts for container \(container.name)")
+            }
+        }
+        return accountsInfoArray
+    }
+
     private static func fetchGroupForAccount(_ store: CNContactStore, _ accountId: String) -> [CNGroup] {
         let groupPredicate = CNGroup.predicateForGroupsInContainer(withIdentifier: accountId)
 
@@ -513,9 +557,10 @@ public class SwiftFlutterContactsPlugin: NSObject, FlutterPlugin, FlutterStreamH
                 let withGroups = args[4] as! Bool
                 let withAccounts = args[5] as! Bool
                 let onlyWithAddress = args[6] as! Bool
-                let returnUnifiedContacts = args[7] as! Bool
-                // args[8] = includeNonVisibleOnAndroid
-                let includeNotesOnIos13AndAbove = args[9] as! Bool
+                let excludeAccountIds = args[7] as! [String]
+                let returnUnifiedContacts = args[8] as! Bool
+                // args[9] = includeNonVisibleOnAndroid
+                let includeNotesOnIos13AndAbove = args[10] as! Bool
                 let contacts = FlutterContacts.select(
                     id: id,
                     withProperties: withProperties,
@@ -524,6 +569,7 @@ public class SwiftFlutterContactsPlugin: NSObject, FlutterPlugin, FlutterStreamH
                     withGroups: withGroups,
                     withAccounts: withAccounts,
                     onlyWithAddress: onlyWithAddress,
+                    excludedAccountIds: excludeAccountIds,
                     returnUnifiedContacts: returnUnifiedContacts,
                     includeNotesOnIos13AndAbove: includeNotesOnIos13AndAbove
                 )
@@ -599,7 +645,14 @@ public class SwiftFlutterContactsPlugin: NSObject, FlutterPlugin, FlutterStreamH
                 let groups = FlutterContacts.getGroupsForAccount(accountId: accountId)
                 result(groups)
             }
-
+            break;
+        case "getAccountInfos":
+            DispatchQueue.global(qos: .userInteractive).async {
+                let args = call.arguments as! [Any?]
+                let unifiedContacts = args[0] as! Bool
+                let groups = FlutterContacts.getAccountsInfos(unifiedContacts: unifiedContacts)
+                result(groups)
+            }
             break;
         case "insertGroup":
             DispatchQueue.global(qos: .userInteractive).async {
@@ -657,6 +710,7 @@ public class SwiftFlutterContactsPlugin: NSObject, FlutterPlugin, FlutterStreamH
                     withThumbnail: true,
                     withPhoto: true,
                     onlyWithAddress: false,
+                    excludedAccountIds: [],
                     returnUnifiedContacts: true,
                     includeNotesOnIos13AndAbove: false,
                     externalIntent: true
