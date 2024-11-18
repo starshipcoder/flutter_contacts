@@ -134,9 +134,11 @@ public enum FlutterContacts {
             let containerMemberships = fetchContainerMemberships(store, containers)
             for (index, contact) in contacts.enumerated() {
                 if let contactContainers = containerMemberships[contact.id] {
-                    contacts[index].accounts = contactContainers.map { Account(fromContainer: containers[$0]) }
+                    let validContainers = contactContainers.filter { !excludedAccountIds.contains(containers[$0].identifier) }
+                    contacts[index].accounts = validContainers.map { Account(fromContainer: containers[$0]) }
                 }
             }
+            contacts = contacts.filter { !$0.accounts.isEmpty }
         }
         return contacts.map { $0.toMap() }
     }
