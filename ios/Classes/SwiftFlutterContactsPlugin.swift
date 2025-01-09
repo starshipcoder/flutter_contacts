@@ -22,6 +22,7 @@ public enum FlutterContacts {
         var keys: [Any] = [
             CNContactFormatter.descriptorForRequiredKeys(for: .fullName),
             CNContactIdentifierKey,
+            CNContactOrganizationNameKey,
         ]
         if withProperties {
             keys += [
@@ -37,7 +38,6 @@ public enum FlutterContacts {
                 CNContactPhoneNumbersKey,
                 CNContactEmailAddressesKey,
                 CNContactPostalAddressesKey,
-                CNContactOrganizationNameKey,
                 CNContactJobTitleKey,
                 CNContactDepartmentNameKey,
                 CNContactUrlAddressesKey,

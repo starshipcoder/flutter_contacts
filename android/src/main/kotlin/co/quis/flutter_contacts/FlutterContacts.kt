@@ -103,7 +103,8 @@ class FlutterContacts {
                 Data.CONTACT_ID,
                 Data.MIMETYPE,
                 Contacts.DISPLAY_NAME_PRIMARY,
-                Contacts.STARRED
+                Contacts.STARRED,
+                Organization.COMPANY,
             )
             if (withThumbnail) {
                 projection.add(Photo.PHOTO)
@@ -155,13 +156,13 @@ class FlutterContacts {
 //                            StructuredPostal.COUNTRY,
 //                            StructuredPostal.TYPE,
 //                            StructuredPostal.LABEL,
-                            Organization.COMPANY,
-                            Organization.TITLE,
-                            Organization.DEPARTMENT,
-                            Organization.JOB_DESCRIPTION,
-                            Organization.SYMBOL,
-                            Organization.PHONETIC_NAME,
-                            Organization.OFFICE_LOCATION,
+//                            Organization.COMPANY,
+//                            Organization.TITLE,
+//                            Organization.DEPARTMENT,
+//                            Organization.JOB_DESCRIPTION,
+//                            Organization.SYMBOL,
+//                            Organization.PHONETIC_NAME,
+//                            Organization.OFFICE_LOCATION,
                             Website.URL,
                             Website.TYPE,
                             Website.LABEL,
@@ -321,6 +322,19 @@ class FlutterContacts {
                     contact.thumbnail = cursor.getBlob(cursor.getColumnIndex(Photo.PHOTO))
                 }
 
+                if (mimetype == Organization.CONTENT_ITEM_TYPE) {
+                    val organization = POrganization(
+                        getString(Organization.COMPANY),
+                        "", //getString(Organization.TITLE),
+                        "", //getString(Organization.DEPARTMENT),
+                        "", //getString(Organization.JOB_DESCRIPTION),
+                        "", //getString(Organization.SYMBOL),
+                        "", //getString(Organization.PHONETIC_NAME),
+                        "" //getString(Organization.OFFICE_LOCATION)
+                        )
+                    contact.organizations += organization
+                }
+
                 if (withAccounts) {
                     // Raw IDs are IDs of the contact in different accounts (e.g. the
                     // same contact might have Google, WhatsApp and Skype accounts, each
@@ -426,18 +440,18 @@ class FlutterContacts {
                             )
                             contact.addresses += address
                         }
-                        Organization.CONTENT_ITEM_TYPE -> {
-                            val organization = POrganization(
-                                getString(Organization.COMPANY),
-                                getString(Organization.TITLE),
-                                getString(Organization.DEPARTMENT),
-                                getString(Organization.JOB_DESCRIPTION),
-                                getString(Organization.SYMBOL),
-                                getString(Organization.PHONETIC_NAME),
-                                getString(Organization.OFFICE_LOCATION)
-                            )
-                            contact.organizations += organization
-                        }
+//                        Organization.CONTENT_ITEM_TYPE -> {
+//                            val organization = POrganization(
+//                                getString(Organization.COMPANY),
+//                                getString(Organization.TITLE),
+//                                getString(Organization.DEPARTMENT),
+//                                getString(Organization.JOB_DESCRIPTION),
+//                                getString(Organization.SYMBOL),
+//                                getString(Organization.PHONETIC_NAME),
+//                                getString(Organization.OFFICE_LOCATION)
+//                            )
+//                            contact.organizations += organization
+//                        }
                         Website.CONTENT_ITEM_TYPE -> {
                             val label: String = getWebsiteLabel(cursor)
                             val customLabel: String =
