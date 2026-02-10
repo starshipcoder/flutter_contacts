@@ -177,124 +177,224 @@ class FlutterContactsPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Str
             // Selects fields for request contact, or for all contacts.
             "select" ->
                 coroutineScope.launch(Dispatchers.IO) { // runs in a background thread
-                    val args = call.arguments as List<Any>
-                    val id = args[0] as String?
-                    val withProperties = args[1] as Boolean
-                    val withThumbnail = args[2] as Boolean
-                    val withPhoto = args[3] as Boolean
-                    val withGroups = args[4] as Boolean
-                    val withAccounts = args[5] as Boolean
-                    val onlyWithAddress = args[6] as Boolean
-                    val excludedAccountIds = args[7] as List<String>
-                    val returnUnifiedContacts = args[8] as Boolean
-                    val includeNonVisible = args[9] as Boolean
-                    // args[8] = includeNotesOnIos13AndAbove
-                    val contacts: List<Map<String, Any?>> =
-                        FlutterContacts.select(
-                            resolver!!,
-                            id,
-                            withProperties,
-                            // Sometimes thumbnail is available but photo is not, so we
-                            // fetch thumbnails even if only the photo was requested.
-                            withThumbnail || withPhoto,
-                            withPhoto,
-                            withGroups,
-                            withAccounts,
-                            onlyWithAddress,
-                            excludedAccountIds,
-                            returnUnifiedContacts,
-                            includeNonVisible
-                        )
-                    coroutineScope.launch(Dispatchers.Main) { result.success(contacts) }
+                    try {
+                        val localResolver = resolver
+                        if (localResolver == null) {
+                            coroutineScope.launch(Dispatchers.Main) { result.success(listOf<Map<String, Any?>>()) }
+                            return@launch
+                        }
+                        val args = call.arguments as List<Any>
+                        val id = args[0] as String?
+                        val withProperties = args[1] as Boolean
+                        val withThumbnail = args[2] as Boolean
+                        val withPhoto = args[3] as Boolean
+                        val withGroups = args[4] as Boolean
+                        val withAccounts = args[5] as Boolean
+                        val onlyWithAddress = args[6] as Boolean
+                        val excludedAccountIds = args[7] as List<String>
+                        val returnUnifiedContacts = args[8] as Boolean
+                        val includeNonVisible = args[9] as Boolean
+                        // args[8] = includeNotesOnIos13AndAbove
+                        val contacts: List<Map<String, Any?>> =
+                            FlutterContacts.select(
+                                localResolver,
+                                id,
+                                withProperties,
+                                // Sometimes thumbnail is available but photo is not, so we
+                                // fetch thumbnails even if only the photo was requested.
+                                withThumbnail || withPhoto,
+                                withPhoto,
+                                withGroups,
+                                withAccounts,
+                                onlyWithAddress,
+                                excludedAccountIds,
+                                returnUnifiedContacts,
+                                includeNonVisible
+                            )
+                        coroutineScope.launch(Dispatchers.Main) { result.success(contacts) }
+                    } catch (e: Exception) {
+                        Log.e("FlutterContacts", "Error in select", e)
+                        coroutineScope.launch(Dispatchers.Main) { result.success(listOf<Map<String, Any?>>()) }
+                    }
                 }
             // Inserts a new contact and return it.
             "insert" ->
                 coroutineScope.launch(Dispatchers.IO) {
-                    val args = call.arguments as List<Any>
-                    val contact = args[0] as Map<String, Any>
-                    val insertedContact: Map<String, Any?>? =
-                        FlutterContacts.insert(resolver!!, contact)
-                    coroutineScope.launch(Dispatchers.Main) {
-                        if (insertedContact != null) {
-                            result.success(insertedContact)
-                        } else {
-                            result.error("", "failed to create contact", "")
+                    try {
+                        val localResolver = resolver
+                        if (localResolver == null) {
+                            coroutineScope.launch(Dispatchers.Main) { result.error("", "resolver is null", "") }
+                            return@launch
                         }
+                        val args = call.arguments as List<Any>
+                        val contact = args[0] as Map<String, Any>
+                        val insertedContact: Map<String, Any?>? =
+                            FlutterContacts.insert(localResolver, contact)
+                        coroutineScope.launch(Dispatchers.Main) {
+                            if (insertedContact != null) {
+                                result.success(insertedContact)
+                            } else {
+                                result.error("", "failed to create contact", "")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("FlutterContacts", "Error in insert", e)
+                        coroutineScope.launch(Dispatchers.Main) { result.error("", "Error: ${e.message}", "") }
                     }
                 }
             // Updates an existing contact and returns it.
             "update" ->
                 coroutineScope.launch(Dispatchers.IO) {
-                    val args = call.arguments as List<Any>
-                    val contact = args[0] as Map<String, Any>
-                    val withGroups = args[1] as Boolean
-                    val updatedContact: Map<String, Any?>? =
-                        FlutterContacts.update(resolver!!, contact, withGroups)
-                    coroutineScope.launch(Dispatchers.Main) {
-                        if (updatedContact != null) {
-                            result.success(updatedContact)
-                        } else {
-                            result.error("", "failed to update contact", "")
+                    try {
+                        val localResolver = resolver
+                        if (localResolver == null) {
+                            coroutineScope.launch(Dispatchers.Main) { result.error("", "resolver is null", "") }
+                            return@launch
                         }
+                        val args = call.arguments as List<Any>
+                        val contact = args[0] as Map<String, Any>
+                        val withGroups = args[1] as Boolean
+                        val updatedContact: Map<String, Any?>? =
+                            FlutterContacts.update(localResolver, contact, withGroups)
+                        coroutineScope.launch(Dispatchers.Main) {
+                            if (updatedContact != null) {
+                                result.success(updatedContact)
+                            } else {
+                                result.error("", "failed to update contact", "")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("FlutterContacts", "Error in update", e)
+                        coroutineScope.launch(Dispatchers.Main) { result.error("", "Error: ${e.message}", "") }
                     }
                 }
             // Deletes contacts with given IDs.
             "delete" ->
                 coroutineScope.launch(Dispatchers.IO) {
-                    FlutterContacts.delete(resolver!!, call.arguments as List<String>)
-                    coroutineScope.launch(Dispatchers.Main) { result.success(null) }
+                    try {
+                        val localResolver = resolver
+                        if (localResolver == null) {
+                            coroutineScope.launch(Dispatchers.Main) { result.error("", "resolver is null", "") }
+                            return@launch
+                        }
+                        FlutterContacts.delete(localResolver, call.arguments as List<String>)
+                        coroutineScope.launch(Dispatchers.Main) { result.success(null) }
+                    } catch (e: Exception) {
+                        Log.e("FlutterContacts", "Error in delete", e)
+                        coroutineScope.launch(Dispatchers.Main) { result.error("", "Error: ${e.message}", "") }
+                    }
                 }
             // Fetches all groups.
             "getGroups" ->
                 coroutineScope.launch(Dispatchers.IO) {
-                    val groups: List<Map<String, Any?>> =
-                        FlutterContacts.getGroups(resolver!!)
-                    coroutineScope.launch(Dispatchers.Main) { result.success(groups) }
+                    try {
+                        val localResolver = resolver
+                        if (localResolver == null) {
+                            coroutineScope.launch(Dispatchers.Main) { result.success(listOf<Map<String, Any?>>()) }
+                            return@launch
+                        }
+                        val groups: List<Map<String, Any?>> =
+                            FlutterContacts.getGroups(localResolver)
+                        coroutineScope.launch(Dispatchers.Main) { result.success(groups) }
+                    } catch (e: Exception) {
+                        Log.e("FlutterContacts", "Error in getGroups", e)
+                        coroutineScope.launch(Dispatchers.Main) { result.success(listOf<Map<String, Any?>>()) }
+                    }
                 }
             "getGroupsForAccount" -> coroutineScope.launch(Dispatchers.IO) {
-                val args = call.arguments as List<Any>
-                val accountId = args[0] as String
-                val groups: List<Map<String, Any?>> =
-                    FlutterContacts.getGroupsForAccount(resolver!!, accountId)
-                coroutineScope.launch(Dispatchers.Main) { result.success(groups) }
+                try {
+                    val args = call.arguments as List<Any>
+                    val accountId = args[0] as String
+                    val localResolver = resolver
+                    if (localResolver == null) {
+                        coroutineScope.launch(Dispatchers.Main) { result.success(listOf<Map<String, Any?>>()) }
+                        return@launch
+                    }
+                    val groups: List<Map<String, Any?>> =
+                        FlutterContacts.getGroupsForAccount(localResolver, accountId)
+                    coroutineScope.launch(Dispatchers.Main) { result.success(groups) }
+                } catch (e: Exception) {
+                    Log.e("FlutterContacts", "Error in getGroupsForAccount", e)
+                    coroutineScope.launch(Dispatchers.Main) { result.success(listOf<Map<String, Any?>>()) }
+                }
             }
             "getAccountInfos" ->
                 coroutineScope.launch(Dispatchers.IO) {
-                    val args = call.arguments as List<Any>
-                    val unifiedContacts = args[0] as Boolean
-                    val infos: List<Map<String, Any?>> = FlutterContacts2.getAccountInfos(resolver!!, unifiedContacts)
-                    coroutineScope.launch(Dispatchers.Main) { result.success(infos) }
+                    try {
+                        val localResolver = resolver
+                        if (localResolver == null) {
+                            coroutineScope.launch(Dispatchers.Main) { result.success(listOf<Map<String, Any?>>()) }
+                            return@launch
+                        }
+                        val args = call.arguments as List<Any>
+                        val unifiedContacts = args[0] as Boolean
+                        val infos: List<Map<String, Any?>> = FlutterContacts2.getAccountInfos(localResolver, unifiedContacts)
+                        coroutineScope.launch(Dispatchers.Main) { result.success(infos) }
+                    } catch (e: Exception) {
+                        Log.e("FlutterContacts", "Error in getAccountInfos", e)
+                        coroutineScope.launch(Dispatchers.Main) { result.success(listOf<Map<String, Any?>>()) }
+                    }
                 }
             // Insert a new group and returns it.
             "insertGroup" ->
                 coroutineScope.launch(Dispatchers.IO) {
-                    val args = call.arguments as List<Any>
-                    val group = args[0] as Map<String, Any>
-                    val insertedGroup: Map<String, Any?>? =
-                        FlutterContacts.insertGroup(resolver!!, group)
-                    coroutineScope.launch(Dispatchers.Main) {
-                        result.success(insertedGroup)
+                    try {
+                        val localResolver = resolver
+                        if (localResolver == null) {
+                            coroutineScope.launch(Dispatchers.Main) { result.success(null) }
+                            return@launch
+                        }
+                        val args = call.arguments as List<Any>
+                        val group = args[0] as Map<String, Any>
+                        val insertedGroup: Map<String, Any?>? =
+                            FlutterContacts.insertGroup(localResolver, group)
+                        coroutineScope.launch(Dispatchers.Main) {
+                            result.success(insertedGroup)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("FlutterContacts", "Error in insertGroup", e)
+                        coroutineScope.launch(Dispatchers.Main) { result.success(null) }
                     }
                 }
             // Updates a group and returns it.
             "updateGroup" ->
                 coroutineScope.launch(Dispatchers.IO) {
-                    val args = call.arguments as List<Any>
-                    val group = args[0] as Map<String, Any>
-                    val updatedGroup: Map<String, Any?>? =
-                        FlutterContacts.updateGroup(resolver!!, group)
-                    coroutineScope.launch(Dispatchers.Main) {
-                        result.success(updatedGroup)
+                    try {
+                        val localResolver = resolver
+                        if (localResolver == null) {
+                            coroutineScope.launch(Dispatchers.Main) { result.success(null) }
+                            return@launch
+                        }
+                        val args = call.arguments as List<Any>
+                        val group = args[0] as Map<String, Any>
+                        val updatedGroup: Map<String, Any?>? =
+                            FlutterContacts.updateGroup(localResolver, group)
+                        coroutineScope.launch(Dispatchers.Main) {
+                            result.success(updatedGroup)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("FlutterContacts", "Error in updateGroup", e)
+                        coroutineScope.launch(Dispatchers.Main) { result.success(null) }
                     }
                 }
             // Deletes a group.
             "deleteGroup" ->
                 coroutineScope.launch(Dispatchers.IO) {
-                    val args = call.arguments as List<Any>
-                    val group = args[0] as Map<String, Any>
-                    FlutterContacts.deleteGroup(resolver!!, group)
-                    coroutineScope.launch(Dispatchers.Main) {
-                        result.success(null)
+                    try {
+                        val localResolver = resolver
+                        if (localResolver == null) {
+                            coroutineScope.launch(Dispatchers.Main) { result.success(null) }
+                            return@launch
+                        }
+                        val args = call.arguments as List<Any>
+                        val group = args[0] as Map<String, Any>
+                        FlutterContacts.deleteGroup(localResolver, group)
+                        coroutineScope.launch(Dispatchers.Main) {
+                            result.success(null)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("FlutterContacts", "Error in deleteGroup", e)
+                        coroutineScope.launch(Dispatchers.Main) { result.success(null) }
                     }
                 }
             // Opens external contact app to view existing contact.
@@ -334,62 +434,70 @@ class FlutterContactsPlugin : FlutterPlugin, MethodCallHandler, EventChannel.Str
     }
 
     private fun getContactIdFromExternalInsertResult(intent: Intent?): String? {
-        if (intent == null) {
-            return null
-        }
-
-        val uri = intent.getData()?.getPath()
-        if (uri == null) {
-            return null
-        }
-
-        val hasContactsReadPermission = ContextCompat.checkSelfPermission(
-            context!!, Manifest.permission.READ_CONTACTS
-        ) == PackageManager.PERMISSION_GRANTED
-        if (!hasContactsReadPermission) {
-            // Check the contacts read permission since 'open external insert' can be
-            // called even without contacts permission. So while selecting contacts, be
-            // sure that we have read permission.
-            return null
-        }
-
-        // Result can be of two forms:
-        // content://com.android.contacts/<lookup_key>/<raw_id>
-        // content://com.android.contacts/raw_contacts/<raw_id>
-        val segments = intent.getData()?.getPathSegments()
-        if (segments == null || segments.size < 2) {
-            return null
-        }
-        val secondToLastSegment = segments[segments.size - 2]
-
-        if (secondToLastSegment == "raw_contacts") {
-            val rawId = segments.last()
-            val contacts: List<Map<String, Any?>> =
-                FlutterContacts.select(
-                    resolver!!,
-                    rawId,
-                    /*withProperties=*/false,
-                    /*withThumbnail=*/false,
-                    /*withPhoto=*/false,
-                    /*withGroups=*/false,
-                    /*withAccounts=*/false,
-                    /*onlyWithAddress=*/false,
-                    /*excludedAccountIds=*/listOf(),
-                    /*returnUnifiedContacts=*/true,
-                    /*includeNonVisible=*/true,
-                    /*idIsRawContactId=*/true
-                )
-            if (contacts.isEmpty()) {
+        try {
+            if (intent == null) {
                 return null
             }
-            return contacts[0]["id"] as String?
-        } else {
-            val lookupKey = secondToLastSegment
-            val contactId = FlutterContacts.findIdWithLookupKey(
-                resolver!!,
-                lookupKey
-            )
-            return contactId
+
+            val uri = intent.getData()?.getPath()
+            if (uri == null) {
+                return null
+            }
+
+            val localContext = context ?: return null
+            val localResolver = resolver ?: return null
+
+            val hasContactsReadPermission = ContextCompat.checkSelfPermission(
+                localContext, Manifest.permission.READ_CONTACTS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!hasContactsReadPermission) {
+                // Check the contacts read permission since 'open external insert' can be
+                // called even without contacts permission. So while selecting contacts, be
+                // sure that we have read permission.
+                return null
+            }
+
+            // Result can be of two forms:
+            // content://com.android.contacts/<lookup_key>/<raw_id>
+            // content://com.android.contacts/raw_contacts/<raw_id>
+            val segments = intent.getData()?.getPathSegments()
+            if (segments == null || segments.size < 2) {
+                return null
+            }
+            val secondToLastSegment = segments[segments.size - 2]
+
+            if (secondToLastSegment == "raw_contacts") {
+                val rawId = segments.last()
+                val contacts: List<Map<String, Any?>> =
+                    FlutterContacts.select(
+                        localResolver,
+                        rawId,
+                        /*withProperties=*/false,
+                        /*withThumbnail=*/false,
+                        /*withPhoto=*/false,
+                        /*withGroups=*/false,
+                        /*withAccounts=*/false,
+                        /*onlyWithAddress=*/false,
+                        /*excludedAccountIds=*/listOf(),
+                        /*returnUnifiedContacts=*/true,
+                        /*includeNonVisible=*/true,
+                        /*idIsRawContactId=*/true
+                    )
+                if (contacts.isEmpty()) {
+                    return null
+                }
+                return contacts[0]["id"] as String?
+            } else {
+                val lookupKey = secondToLastSegment
+                val contactId = FlutterContacts.findIdWithLookupKey(
+                    localResolver,
+                    lookupKey
+                )
+                return contactId
+            }
+        } catch (e: Exception) {
+            Log.e("FlutterContacts", "Error in getContactIdFromExternalInsertResult", e)
+            return null
         }
     }
 

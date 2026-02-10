@@ -281,8 +281,14 @@ class FlutterContacts {
             fun getInt(col: String): Int = cursor.getInt(cursor.getColumnIndex(col)) ?: 0
             fun getBool(col: String): Boolean = getInt(col) == 1
 
-            val excludedAccountName = excludedAccountIds.map { it.split("|")[0] }
-            val excludedAccountType = excludedAccountIds.map { it.split("|")[1] }
+            val excludedAccountName = excludedAccountIds.mapNotNull {
+                val parts = it.split("|")
+                if (parts.size >= 2) parts[0] else null
+            }
+            val excludedAccountType = excludedAccountIds.mapNotNull {
+                val parts = it.split("|")
+                if (parts.size >= 2) parts[1] else null
+            }
 
             while (cursor.moveToNext()) {
                 // ID and display name.
@@ -733,13 +739,21 @@ class FlutterContacts {
         }
 
         fun getGroups(resolver: ContentResolver): List<Map<String, Any>> {
-            val groups = fetchGroups(resolver)
-            return groups.values.map { it.toMap() }
+            return try {
+                val groups = fetchGroups(resolver)
+                groups.values.map { it.toMap() }
+            } catch (e: Exception) {
+                listOf()
+            }
         }
 
         fun getGroupsForAccount(resolver: ContentResolver, accountId: String): List<Map<String, Any>> {
-            val groups = fetchGroupsForAccount(resolver, accountId)
-            return groups.values.map { it.toMap() }
+            return try {
+                val groups = fetchGroupsForAccount(resolver, accountId)
+                groups.values.map { it.toMap() }
+            } catch (e: Exception) {
+                listOf()
+            }
         }
 
 
@@ -930,50 +944,68 @@ class FlutterContacts {
                 Groups._ID,
                 Groups.TITLE
             )
-            val cursor = resolver.query(
-                Groups.CONTENT_URI,
-                projection.toTypedArray(),
-                /*selection=*/null,
-                /*selectionArgs=*/null,
-                /*sortOrder=*/null
-            )
-            if (cursor == null) {
+            var cursor: Cursor? = null
+            try {
+                cursor = resolver.query(
+                    Groups.CONTENT_URI,
+                    projection.toTypedArray(),
+                    /*selection=*/null,
+                    /*selectionArgs=*/null,
+                    /*sortOrder=*/null
+                )
+                if (cursor == null) {
+                    return mapOf()
+                }
+                var groups = mutableMapOf<String, PGroup>()
+                while (cursor.moveToNext()) {
+                    val groupId = cursor.getString(cursor.getColumnIndex(Groups._ID)) ?: ""
+                    val groupName = cursor.getString(cursor.getColumnIndex(Groups.TITLE)) ?: ""
+                    groups[groupId] = PGroup(id = groupId, name = groupName)
+                }
+                return groups
+            } catch (e: Exception) {
                 return mapOf()
+            } finally {
+                cursor?.close()
             }
-            var groups = mutableMapOf<String, PGroup>()
-            while (cursor.moveToNext()) {
-                val groupId = cursor.getString(cursor.getColumnIndex(Groups._ID)) ?: ""
-                val groupName = cursor.getString(cursor.getColumnIndex(Groups.TITLE)) ?: ""
-                groups[groupId] = PGroup(id = groupId, name = groupName)
-            }
-            return groups
         }
 
         fun fetchGroupsForAccount(resolver: ContentResolver, accountId: String): Map<String, PGroup> {
             val split = accountId.split("|")
+            if (split.size < 2) {
+                // Invalid accountId format, return empty map instead of crashing
+                return mapOf()
+            }
             val name = split[0]
             val type = split[1]
             val projection = listOf(
                 Groups._ID,
                 Groups.TITLE,
             )
-            val cursor = resolver.query(
-                Groups.CONTENT_URI,
-                projection.toTypedArray(),
-                "${Groups.ACCOUNT_NAME} = ? AND ${Groups.ACCOUNT_TYPE} = ?",
-                arrayOf(name, type),
-                /*sortOrder=*/null
-            )
-            if (cursor == null) {
+            var cursor: Cursor? = null
+            try {
+                cursor = resolver.query(
+                    Groups.CONTENT_URI,
+                    projection.toTypedArray(),
+                    "${Groups.ACCOUNT_NAME} = ? AND ${Groups.ACCOUNT_TYPE} = ?",
+                    arrayOf(name, type),
+                    /*sortOrder=*/null
+                )
+                if (cursor == null) {
+                    return mapOf()
+                }
+                var groups = mutableMapOf<String, PGroup>()
+                while (cursor.moveToNext()) {
+                    val groupId = cursor.getString(cursor.getColumnIndex(Groups._ID)) ?: ""
+                    val groupName = cursor.getString(cursor.getColumnIndex(Groups.TITLE)) ?: ""
+                    groups[groupId] = PGroup(id = groupId, name = groupName)
+                }
+                return groups
+            } catch (e: Exception) {
                 return mapOf()
+            } finally {
+                cursor?.close()
             }
-            var groups = mutableMapOf<String, PGroup>()
-            while (cursor.moveToNext()) {
-                val groupId = cursor.getString(cursor.getColumnIndex(Groups._ID)) ?: ""
-                val groupName = cursor.getString(cursor.getColumnIndex(Groups.TITLE)) ?: ""
-                groups[groupId] = PGroup(id = groupId, name = groupName)
-            }
-            return groups
         }
 
         private fun getPhoneCustomLabel(cursor: Cursor): String {
