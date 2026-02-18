@@ -1,3 +1,4 @@
+import 'package:flutter_contacts/sanitize.dart';
 import 'package:flutter_contacts/vcard.dart';
 
 /// Note, i.e. a free-form string about the contact.
@@ -14,7 +15,7 @@ class Note {
   Note(this.note);
 
   factory Note.fromJson(Map<String, dynamic> json) =>
-      Note((json['note'] as String?) ?? '');
+      Note(sanitizeString((json['note'] as String?) ?? ''));
 
   Map<String, dynamic> toJson() => <String, dynamic>{'note': note};
 

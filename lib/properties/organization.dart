@@ -1,3 +1,4 @@
+import 'package:flutter_contacts/sanitize.dart';
 import 'package:flutter_contacts/vcard.dart';
 
 /// Organization / job.
@@ -34,13 +35,13 @@ class Organization {
   });
 
   factory Organization.fromJson(Map<String, dynamic> json) => Organization(
-        company: (json['company'] as String?) ?? '',
-        title: (json['title'] as String?) ?? '',
-        department: (json['department'] as String?) ?? '',
-        jobDescription: (json['jobDescription'] as String?) ?? '',
-        symbol: (json['symbol'] as String?) ?? '',
+        company: sanitizeString((json['company'] as String?) ?? ''),
+        title: sanitizeString((json['title'] as String?) ?? ''),
+        department: sanitizeString((json['department'] as String?) ?? ''),
+        jobDescription: sanitizeString((json['jobDescription'] as String?) ?? ''),
+        symbol: sanitizeString((json['symbol'] as String?) ?? ''),
         phoneticName: (json['phoneticName'] as String?) ?? '',
-        officeLocation: (json['officeLocation'] as String?) ?? '',
+        officeLocation: sanitizeString((json['officeLocation'] as String?) ?? ''),
       );
 
   Map<String, dynamic> toJson() => <String, dynamic>{

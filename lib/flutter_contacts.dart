@@ -74,7 +74,7 @@ class FlutterContacts {
     bool withPhoto = false,
     bool withGroups = false,
     bool withAccounts = false,
-    bool sorted = true,
+    bool sorted = false,
     bool onlyWithAddress = false,
     bool deduplicateProperties = true,
     List<String> excludedAccountIds = const [],

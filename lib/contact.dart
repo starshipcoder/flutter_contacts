@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_contacts/config.dart';
+import 'package:flutter_contacts/sanitize.dart';
 import 'package:flutter_contacts/vcard.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 
@@ -160,7 +161,7 @@ class Contact {
 
   factory Contact.fromJson(Map<String, dynamic> json) => Contact(
         id: (json['id'] as String?) ?? '',
-        displayName: (json['displayName'] as String?) ?? '',
+        displayName: sanitizeString((json['displayName'] as String?) ?? ''),
         thumbnail: json['thumbnail'] as Uint8List?,
         photo: json['photo'] as Uint8List?,
         isStarred: (json['isStarred'] as bool?) ?? false,

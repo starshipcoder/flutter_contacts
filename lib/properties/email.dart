@@ -1,5 +1,6 @@
 import 'package:flutter_contacts/config.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:flutter_contacts/sanitize.dart';
 import 'package:flutter_contacts/vcard.dart';
 
 /// Labeled email.
@@ -25,10 +26,10 @@ class Email {
   });
 
   factory Email.fromJson(Map<String, dynamic> json) => Email(
-        (json['address'] as String?) ?? '',
+        sanitizeString((json['address'] as String?) ?? ''),
         label: _stringToEmailLabel[json['label'] as String? ?? ''] ??
             EmailLabel.home,
-        customLabel: (json['customLabel'] as String?) ?? '',
+        customLabel: sanitizeString((json['customLabel'] as String?) ?? ''),
         isPrimary: (json['isPrimary'] as bool?) ?? false,
       );
 

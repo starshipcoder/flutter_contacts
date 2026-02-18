@@ -1,3 +1,5 @@
+import 'package:flutter_contacts/sanitize.dart';
+
 /// Group (called label on Android and group on iOS).
 ///
 /// A contact may belong to zero, one or more groups.
@@ -9,7 +11,7 @@ class Group {
 
   factory Group.fromJson(Map<String, dynamic> json) => Group(
         (json['id'] as String?) ?? '',
-        (json['name'] as String?) ?? '',
+        sanitizeString((json['name'] as String?) ?? ''),
       );
 
   Map<String, dynamic> toJson() => <String, dynamic>{

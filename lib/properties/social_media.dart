@@ -1,3 +1,4 @@
+import 'package:flutter_contacts/sanitize.dart';
 import 'package:flutter_contacts/vcard.dart';
 
 /// Social media / instant messaging profile.
@@ -24,10 +25,10 @@ class SocialMedia {
       {this.label = SocialMediaLabel.other, this.customLabel = ''});
 
   factory SocialMedia.fromJson(Map<String, dynamic> json) => SocialMedia(
-        (json['userName'] as String?) ?? '',
+        sanitizeString((json['userName'] as String?) ?? ''),
         label: _stringToSocialMediaLabel[json['label'] as String? ?? ''] ??
             SocialMediaLabel.other,
-        customLabel: (json['customLabel'] as String?) ?? '',
+        customLabel: sanitizeString((json['customLabel'] as String?) ?? ''),
       );
 
   Map<String, dynamic> toJson() => {

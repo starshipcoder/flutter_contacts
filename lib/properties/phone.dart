@@ -1,5 +1,6 @@
 import 'package:flutter_contacts/config.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:flutter_contacts/sanitize.dart';
 import 'package:flutter_contacts/vcard.dart';
 
 /// Labeled phone.
@@ -29,11 +30,11 @@ class Phone {
   });
 
   factory Phone.fromJson(Map<String, dynamic> json) => Phone(
-        (json['number'] as String?) ?? '',
-        normalizedNumber: (json['normalizedNumber'] as String?) ?? '',
+        sanitizeString((json['number'] as String?) ?? ''),
+        normalizedNumber: sanitizeString((json['normalizedNumber'] as String?) ?? ''),
         label: _stringToPhoneLabel[json['label'] as String? ?? ''] ??
             PhoneLabel.mobile,
-        customLabel: (json['customLabel'] as String?) ?? '',
+        customLabel: sanitizeString((json['customLabel'] as String?) ?? ''),
         isPrimary: (json['isPrimary'] as bool?) ?? false,
       );
 

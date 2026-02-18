@@ -1,5 +1,6 @@
 import 'package:flutter_contacts/config.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:flutter_contacts/sanitize.dart';
 import 'package:flutter_contacts/vcard.dart';
 
 /// Labeled postal address.
@@ -79,20 +80,20 @@ class Address {
   });
 
   factory Address.fromJson(Map<String, dynamic> json) => Address(
-        (json['address'] as String?) ?? '',
+        sanitizeString((json['address'] as String?) ?? ''),
         label: _stringToAddressLabel[json['label'] as String? ?? ''] ??
             AddressLabel.home,
-        customLabel: (json['customLabel'] as String?) ?? '',
-        street: (json['street'] as String?) ?? '',
-        pobox: (json['pobox'] as String?) ?? '',
-        neighborhood: (json['neighborhood'] as String?) ?? '',
-        city: (json['city'] as String?) ?? '',
-        state: (json['state'] as String?) ?? '',
-        postalCode: (json['postalCode'] as String?) ?? '',
-        country: (json['country'] as String?) ?? '',
+        customLabel: sanitizeString((json['customLabel'] as String?) ?? ''),
+        street: sanitizeString((json['street'] as String?) ?? ''),
+        pobox: sanitizeString((json['pobox'] as String?) ?? ''),
+        neighborhood: sanitizeString((json['neighborhood'] as String?) ?? ''),
+        city: sanitizeString((json['city'] as String?) ?? ''),
+        state: sanitizeString((json['state'] as String?) ?? ''),
+        postalCode: sanitizeString((json['postalCode'] as String?) ?? ''),
+        country: sanitizeString((json['country'] as String?) ?? ''),
         isoCountry: (json['isoCountry'] as String?) ?? '',
-        subAdminArea: (json['subAdminArea'] as String?) ?? '',
-        subLocality: (json['subLocality'] as String?) ?? '',
+        subAdminArea: sanitizeString((json['subAdminArea'] as String?) ?? ''),
+        subLocality: sanitizeString((json['subLocality'] as String?) ?? ''),
       );
   Map<String, dynamic> toJson() => <String, dynamic>{
         'address': address,
