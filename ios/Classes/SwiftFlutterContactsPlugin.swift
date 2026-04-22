@@ -519,8 +519,28 @@ public enum FlutterContacts {
 
 @available(iOS 9.0, *)
 public class SwiftFlutterContactsPlugin: NSObject, FlutterPlugin, FlutterStreamHandler, CNContactViewControllerDelegate, CNContactPickerDelegate {
-    private let rootViewController: UIViewController
     private var externalResult: FlutterResult?
+
+    // Resolved lazily so it works under both UIApplicationDelegate (pre-UIScene)
+    // and UIScene lifecycle. Under UIScene, UIApplication.shared.delegate.window
+    // is nil; the window belongs to the active UIWindowScene instead.
+    private var rootViewController: UIViewController {
+        if #available(iOS 13.0, *) {
+            let activeScene = UIApplication.shared.connectedScenes
+                .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
+                ?? UIApplication.shared.connectedScenes.first as? UIWindowScene
+            if let window = activeScene?.windows.first(where: { $0.isKeyWindow })
+                ?? activeScene?.windows.first,
+               let rvc = window.rootViewController {
+                return rvc
+            }
+        }
+        if let window = UIApplication.shared.delegate?.window ?? nil,
+           let rvc = window.rootViewController {
+            return rvc
+        }
+        fatalError("flutter_contacts: no root view controller available")
+    }
 
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(
@@ -531,14 +551,13 @@ public class SwiftFlutterContactsPlugin: NSObject, FlutterPlugin, FlutterStreamH
             name: "github.com/QuisApp/flutter_contacts/events",
             binaryMessenger: registrar.messenger()
         )
-        let rootViewController = UIApplication.shared.delegate!.window!!.rootViewController!
-        let instance = SwiftFlutterContactsPlugin(rootViewController)
+        let instance = SwiftFlutterContactsPlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
         eventChannel.setStreamHandler(instance)
     }
 
-    init(_ rootViewController: UIViewController) {
-        self.rootViewController = rootViewController
+    override init() {
+        super.init()
     }
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -796,8 +815,7 @@ public class SwiftFlutterContactsPlugin: NSObject, FlutterPlugin, FlutterStreamH
 
     @objc func contactViewControllerDidCancel() {
         if let result = externalResult {
-            let viewController: UIViewController? = UIApplication.shared.delegate?.window??.rootViewController
-            viewController?.dismiss(animated: true, completion: nil)
+            rootViewController.dismiss(animated: true, completion: nil)
             result(nil)
             externalResult = nil
         }
